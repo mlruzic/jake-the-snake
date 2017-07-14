@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html class="no-js">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Jake the Snake</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="main.css">
+  </head>
+  <body>
+    <div class="snake">
+      <div class="snake__menu">
+        <a class="snake__menu-link snake__menu-link--active" href="index.html">Single player</a> | 
+        <a class="snake__menu-link" href="neural.html">Train Neural Net</a>
+      </div>
+
+      <div class="snake__instructions">
+        Use W, A, S, D keys to control the snake
+      </div>
+
+      <div id="game-area" class="snake__sp-container">
+        <canvas id="canvas" class="snake__sp-canvas"></canvas>
+      </div>
+
+      <script src="js/players/humanPlayer.js" type="text/javascript"></script>
+      <script src="js/snake.js" type="text/javascript"></script>
+      <script src="js/food.js" type="text/javascript"></script>
+      <script src="js/game.js" type="text/javascript"></script>
+
+      <script type="text/javascript">
+        var gameArea, canvas;
+
+        (function() {
+          canvas = document.getElementById('canvas');
+          gameArea = document.getElementById('game-area');
+
+          window.addEventListener('resize', resizeGame, false);
+          window.addEventListener('orientationchange', resizeGame, false);
+          resizeGame();
+
+          var ctx = canvas.getContext('2d');
+          var player = new HumanPlayer();
+          var game = new Game(canvas, ctx, player, {
+            onGameOver: function() {
+              this.reset();
+            }
+          });
+          
+          setInterval(function() {
+            game.gameFrame();
+          }, 100);
+        })();
+
+        function resizeGame() {
+          var widthToHeight = 1;
+          var newWidth = window.innerWidth - 200;
+          var newHeight = window.innerHeight - 200;
+          var newWidthToHeight = newWidth / newHeight;
+          
+          if (newWidthToHeight > widthToHeight) {
+              newWidth = newHeight * widthToHeight;
+              gameArea.style.height = newHeight + 'px';
+              gameArea.style.width = newWidth + 'px';
+          } else {
+              newHeight = newWidth / widthToHeight;
+              gameArea.style.width = newWidth + 'px';
+              gameArea.style.height = newHeight + 'px';
+          }
+          
+          gameArea.style.marginTop = (-newHeight / 2 + 60) + 'px';
+          gameArea.style.marginLeft = (-newWidth / 2) + 'px';
+          
+          canvas.width = newWidth;
+          canvas.height = newHeight;
+      }
+
+      </script>
+    </div>
+  </body>
+</html>

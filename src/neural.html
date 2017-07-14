@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html class="no-js">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>Jake the Snake</title>
+    <meta name="description" content="">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="main.css">
+  </head>
+  <body>
+    <div class="snake">
+      <div class="snake__menu">
+        <a class="snake__menu-link" href="index.html">Single player</a> | 
+        <a class="snake__menu-link snake__menu-link--active" href="neural.html">Train Neural Net</a>
+      </div>
+
+      <div class="snake__nn-wrapper">
+
+        <div class="snake__nn-wrapper-left">
+          <div id="container" class="snake__nn-container">
+            <div class="snake__nn-snake-preview">
+              <canvas id="snake__nn-canvas" class="snake__nn-canvas"></canvas>
+            </div>
+            <button id="restart-simulation">Restart simulation</button>
+          </div>
+        </div>
+        
+        <div class="snake__nn-wrapper-right">
+          <div class="snake__form">
+            <div class="snake__form-row">
+              <label class="snake__form-label">Population size:</label>
+              <input class="snake__form-input" type="number" id="population-size" value="500" />
+            </div>
+            <div class="snake__form-row">
+              <label class="snake__form-label">Mutation chance:</label>
+              <input class="snake__form-input" type="number" id="mutation-chance" value="0.1" />
+            </div>
+            <div class="snake__form-row">
+              <button id="start">Start</button>
+              <i>* might take a few hours </i>
+            </div>
+
+            <div class="snake__form-row snake__form-space-top">
+              <label class="snake__form-label">Generation:</label>
+              <input class="snake__form-input" type="number" id="current-generation" readonly />
+            </div>
+            <div class="snake__form-row">
+              <label class="snake__form-label">Best score:</label>
+              <input class="snake__form-input" type="number" id="best-score" readonly />
+            </div>
+            <div class="snake__form-row">
+              <button id="stop">Stop</button>
+            </div>
+          </div>
+
+          <div id="stats" class="snake__nn-stats"></div>
+        </div>
+      </div>
+      <div class="snake__nn-wrapper">
+        <div class="snake__nn-wrapper-left">
+          <div class="snake__nn-container">
+            <div class="snake__nn-snake-preview">
+              <canvas id="snake__nn-vizualized" class="snake__nn-vizualized" width="2000" height="1200"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <script src="js/neuralNet.js" type="text/javascript"></script>
+      <script src="js/neuralNetRenderer.js" type="text/javascript"></script>
+      <script src="js/players/neuralPlayer.js" type="text/javascript"></script>
+      <script src="js/snake.js" type="text/javascript"></script>
+      <script src="js/food.js" type="text/javascript"></script>
+      <script src="js/game.js" type="text/javascript"></script>
+      <script src="js/genetic.js" type="text/javascript"></script>
+      
+      <script type="text/javascript">
+        (function() {        
+          var startBtn = document.getElementById('start');
+          var stopBtn = document.getElementById('stop');
+          stopBtn.disabled = true;
+
+          var currentGenerationField = document.getElementById('current-generation');
+          var bestScoreField = document.getElementById('best-score');
+
+          var genetic = new Genetics({
+            onStart: function() {
+              startBtn.disabled = true;
+              stopBtn.disabled = false;
+            },
+            onDone: function() {
+              startBtn.disabled = false;
+              stopBtn.disabled = true;
+            },
+            onNewBestScore: function(neuralNet, score) {
+              window.bestWeights = neuralNet.weights;
+              simulateNN(neuralNet);
+            },
+            onNextGeneration: function(generation, score) {
+              currentGenerationField.value = generation;
+              bestScoreField.value = score;
+            },
+          });
+
+          startBtn.addEventListener('click', function() {
+            var populationSizeField = document.getElementById('population-size');
+            var populationSize = parseInt(populationSizeField.value);
+
+            var mutationChanceField = document.getElementById('mutation-chance');
+            var mutationChance = parseFloat(mutationChanceField.value);
+
+            genetic.start(populationSize, mutationChance);
+          });
+
+          stopBtn.addEventListener('click', function() {
+            genetic.stop();
+          });
+
+          var gameTick = 0;
+          function simulateNN(neuralNet) {
+            var snakeCanvas = document.getElementById('snake__nn-canvas');
+            var nnCanvas = document.getElementById('snake__nn-vizualized');
+            var snakeCanvasCtx =snakeCanvas.getContext('2d');
+            
+            var neuralNetRenderer = new NeuralNetRenderer(NeuralNet.neuronsInLayers, nnCanvas);
+            var player = new NeuralPlayer(NeuralNet.getInputVector, neuralNet.calculateOutput.bind(neuralNet));
+            var game = new Game(snakeCanvas, snakeCanvasCtx, player, {
+              onGameOver: function() {
+                this.reset();
+              },
+            });
+            
+            clearInterval(gameTick);
+            gameTick = setInterval(function() {
+              game.gameFrame();
+              
+              var inputParams = NeuralNet.getInputVector(game);
+              var output = neuralNet.calculateOutput(inputParams);
+              
+              player.performMove(output, game);
+              neuralNetRenderer.draw(neuralNet.weights, inputParams, output);
+            }, 40);
+
+            var restartSimulation = document.getElementById('restart-simulation');
+            restartSimulation.onclick = function() {
+              game.reset();
+            }
+          }
+
+          // initial simulation with previously trained neural net (generation 97382)
+          simulateNN(new NeuralNet([-27.58680943021865, -1.0504182424193615, -10.343068899790374, -10.051651458377009, 30.605701614459704, 20.187548975374895, -19.360854276156815, -31.942699333872216, 46.38106702798923, -42.22213036442635, -25.970070272311485, 47.18144792236214, 38.957855809928205, 48.746845405904594, -8.687891584175645, 30.11304129257364, -34.69195391530944, -7.821294043836467, -48.747900694958446, 23.846918036112854, 47.28641904035371, -10.003157322952646, 30.84883144940227, 41.0384760823443, 1.2134215475648062, 23.124788689936906, -44.43224919098378, -18.836010076048094, 44.86952517533251, -49.083025238432974, -28.702023939749587, 2.7665628559337705, -28.52020437453948, -44.33064132844946, 10.464201310080057, -48.57461985722671, 41.57568908058413, -33.551296284010036, 43.228073684065606, -3.8260465213961083, -1.7512094273334924, -42.28408913482853, 4.791212112176034, 14.088748331178635, -16.49568719771277, -17.834702641051315, 22.592945691273144, -44.45343802110537, 2.167414110888899, -22.65594456475444, -16.038015625269253, -28.566511398106663, -31.9330995163551, -0.49671309784186946, 32.97274587790524, 41.33951536240983, -47.03973339930876, 46.044348608029665, 18.982359262845307, -43.17959237046938, -10.714807427722064, 23.04672335186578, 27.475988595715577, -49.975572736911204, 38.35299122195049, -22.31778164772418, -1.0578212969160035, 38.45744078848486, 31.989930848092143, -27.184286515513723]));
+        })();
+      </script>
+    </div>
+  </body>
+</html>
