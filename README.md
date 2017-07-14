@@ -20,8 +20,8 @@ Neural network contains 5 input neurons, 2 layers of hidden neurons and 3 output
 
 Output is calculated and neuron with highest value determines the next step:
  * neuron 1 - turn left
- * neuron 1 - no change in direction
- * neuron 1 - turn right
+ * neuron 2 - no change in direction
+ * neuron 3 - turn right
 
 
 ### Genetic algorithm
