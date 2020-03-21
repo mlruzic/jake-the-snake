@@ -7,7 +7,6 @@ Snake game - neural network trained with genetic algorithtm (+ single player)
 ## Getting Started
 
 No dependencies, pure javascript. Just open index.html in browser.
-Live site: http://bytecode.hr/p/jake-the-snake/
 
 ### Neural network
 
